@@ -3,12 +3,33 @@ import { successResponse } from '../../common/api-response';
 import { env } from '../../config/env';
 import { authService, REFRESH_COOKIE_NAME } from './auth.service';
 
+function normalizedCookieDomain(raw: string): string | undefined {
+  const value = raw.trim();
+  if (!value) {
+    return undefined;
+  }
+
+  const withoutScheme = value.replace(/^https?:\/\//i, '').split('/')[0];
+  if (!withoutScheme) {
+    return undefined;
+  }
+
+  // Cookie domain must be a hostname only (no protocol, path, or port).
+  if (!/^[a-zA-Z0-9.-]+$/.test(withoutScheme)) {
+    return undefined;
+  }
+
+  return withoutScheme;
+}
+
+const cookieDomain = normalizedCookieDomain(env.COOKIE_DOMAIN);
+
 function setRefreshCookie(res: Response, token: string): void {
   res.cookie(REFRESH_COOKIE_NAME, token, {
     httpOnly: true,
     secure: env.isProduction,
     sameSite: 'lax',
-    domain: env.COOKIE_DOMAIN,
+    domain: cookieDomain,
     path: '/api/auth',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
@@ -19,7 +40,7 @@ function clearRefreshCookie(res: Response): void {
     httpOnly: true,
     secure: env.isProduction,
     sameSite: 'lax',
-    domain: env.COOKIE_DOMAIN,
+    domain: cookieDomain,
     path: '/api/auth',
   });
 }

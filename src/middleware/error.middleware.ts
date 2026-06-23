@@ -18,6 +18,8 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
+  void _next;
+
   if (error instanceof ZodError) {
     res.status(400).json({
       success: false,
@@ -41,7 +43,11 @@ export function errorHandler(
     return;
   }
 
-  logger.error({ error, traceId: req.correlationId }, 'Unhandled exception');
+  if (error instanceof Error) {
+    logger.error({ err: error, traceId: req.correlationId }, 'Unhandled exception');
+  } else {
+    logger.error({ error, traceId: req.correlationId }, 'Unhandled exception');
+  }
   res.status(500).json({
     success: false,
     message: 'Internal server error',
