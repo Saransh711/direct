@@ -12,6 +12,6 @@ COPY --from=base /app/package*.json ./
 COPY --from=base /app/node_modules ./node_modules
 COPY --from=base /app/dist ./dist
 COPY --from=base /app/prisma ./prisma
+COPY --from=base /app/prisma.config.ts ./prisma.config.ts
 EXPOSE 4000
-# CMD ["node", "dist/server.js"]
 CMD ["sh", "-c", "npm run prisma:deploy && npm run prisma:seed && node dist/server.js"]
