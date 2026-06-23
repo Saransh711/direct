@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import { defineConfig, env } from 'prisma/config';
-import process from 'process';
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',
@@ -10,7 +9,6 @@ export default defineConfig({
   },
   datasource: {
     url:
-      process.env.DATABASE_URL ??
-      'postgresql://postgres:postgres@localhost:5432/loan_db?schema=public',
+      env('DATABASE_URL') ?? 'postgresql://postgres:postgres@localhost:5432/loan_db?schema=public',
   },
 });
