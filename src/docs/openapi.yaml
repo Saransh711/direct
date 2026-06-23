@@ -187,6 +187,151 @@ paths:
       security: [{ bearerAuth: [] }]
       responses:
         '200': { description: Eligibility computed }
+  /api/credit-bureau/check:
+    post:
+      summary: Check credit report (public endpoint)
+      tags: [CreditBureau]
+      description: Generates a simulated credit report based on PAN and DOB. No authentication required.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pan, fullName, dob, mobile, consent]
+              properties:
+                pan:
+                  type: string
+                  pattern: ^[A-Z]{5}[0-9]{4}[A-Z]{1}$
+                  example: 'ABCDE1234F'
+                  description: Indian PAN (Permanent Account Number)
+                fullName:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                  example: 'John Doe'
+                dob:
+                  type: string
+                  format: date
+                  example: '1995-06-10'
+                  description: Date of birth in YYYY-MM-DD format (applicant must be >= 18 years)
+                mobile:
+                  type: string
+                  pattern: ^[6-9]\d{9}$
+                  example: '9876543210'
+                  description: Indian mobile number (10 digits, starting with 6-9)
+                consent:
+                  type: boolean
+                  example: true
+                  description: Must be true to proceed
+      responses:
+        '200':
+          description: Credit report generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Credit report generated successfully'
+                  data:
+                    type: object
+                    properties:
+                      bureau:
+                        type: string
+                        example: 'SIMULATED'
+                      bureauReferenceId:
+                        type: string
+                        example: 'SIM-1687350000000-ABC123'
+                      creditScore:
+                        type: integer
+                        minimum: 300
+                        maximum: 900
+                        example: 742
+                      scoreBand:
+                        type: string
+                        enum: [POOR, FAIR, GOOD, VERY_GOOD, EXCELLENT]
+                        example: 'GOOD'
+                      paymentHistory:
+                        type: string
+                        enum: [EXCELLENT, GOOD, AVERAGE, POOR]
+                        example: 'EXCELLENT'
+                      activeLoans:
+                        type: integer
+                        example: 2
+                      closedLoans:
+                        type: integer
+                        example: 5
+                      recentInquiries:
+                        type: integer
+                        example: 1
+                      creditAgeYears:
+                        type: integer
+                        example: 7
+                      creditUtilization:
+                        type: integer
+                        minimum: 5
+                        maximum: 95
+                        example: 28
+                      missedPayments:
+                        type: integer
+                        example: 0
+                      totalOutstanding:
+                        type: number
+                        example: 150000
+                      totalCreditLimit:
+                        type: number
+                        example: 800000
+                      accountMix:
+                        type: array
+                        items:
+                          type: string
+                          enum: [PERSONAL_LOAN, HOME_LOAN, AUTO_LOAN, CREDIT_CARD, CONSUMER_LOAN]
+                        example: ['PERSONAL_LOAN', 'CREDIT_CARD']
+                      generatedAt:
+                        type: string
+                        format: date-time
+                      approvalProbability:
+                        type: integer
+                        minimum: 0
+                        maximum: 100
+                        example: 80
+                      recommendation:
+                        type: string
+                        example: 'Eligible under standard lending policy'
+                      cached:
+                        type: boolean
+                        example: false
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Validation failed'
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                          example: 'dob'
+                        message:
+                          type: string
+                          example: 'Applicant must be at least 18 years old'
+        '503':
+          description: Bureau service temporarily unavailable
   /api/credit-score:
     get:
       summary: Retrieve latest credit report

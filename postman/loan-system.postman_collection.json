@@ -130,6 +130,54 @@
           }
         },
         {
+          "name": "Credit Bureau Check",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/credit-bureau/check",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pan\": \"ABCDE1234F\",\n  \"fullName\": \"John Doe\",\n  \"dob\": \"1995-06-10\",\n  \"mobile\": \"9876543210\",\n  \"consent\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Credit Bureau Check (Invalid PAN)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/credit-bureau/check",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pan\": \"INVALID\",\n  \"fullName\": \"John Doe\",\n  \"dob\": \"1995-06-10\",\n  \"mobile\": \"9876543210\",\n  \"consent\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Credit Bureau Check (Age < 18)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/credit-bureau/check",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pan\": \"ABCDE1234F\",\n  \"fullName\": \"Jane Doe\",\n  \"dob\": \"2010-06-10\",\n  \"mobile\": \"9876543210\",\n  \"consent\": true\n}"
+            }
+          }
+        },
+        {
+          "name": "Credit Bureau Check (No Consent)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/credit-bureau/check",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pan\": \"ABCDE1234F\",\n  \"fullName\": \"John Doe\",\n  \"dob\": \"1995-06-10\",\n  \"mobile\": \"9876543210\",\n  \"consent\": false\n}"
+            }
+          }
+        },
+        {
           "name": "Credit Score",
           "request": {
             "method": "GET",
