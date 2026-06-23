@@ -1,5 +1,7 @@
 FROM node:22-alpine AS base
 WORKDIR /app
+ARG DATABASE_URL=postgresql://postgres:postgres@localhost:5432/loan_db?schema=public
+ENV DATABASE_URL=$DATABASE_URL
 COPY package*.json ./
 RUN npm ci
 COPY . .
