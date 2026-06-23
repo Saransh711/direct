@@ -1,0 +1,519 @@
+{
+  "version": "1.0.0",
+  "basePath": "/api",
+  "responseContract": {
+    "success": {
+      "success": true,
+      "message": "Operation completed successfully",
+      "data": {},
+      "meta": {}
+    },
+    "error": {
+      "success": false,
+      "message": "Validation failed",
+      "errors": [],
+      "traceId": ""
+    }
+  },
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/auth/register",
+      "authentication": "public",
+      "roles": [],
+      "requestSchema": {
+        "firstName": "string",
+        "lastName": "string",
+        "email": "email",
+        "phoneNumber": "string",
+        "password": "string",
+        "confirmPassword": "string"
+      },
+      "validationRules": ["password strength", "confirmPassword matches", "unique email/phone"],
+      "requestExample": {
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "john@example.com",
+        "phoneNumber": "+911234567890",
+        "password": "Str0ng@Password!",
+        "confirmPassword": "Str0ng@Password!"
+      },
+      "responseSchema": { "id": "uuid", "email": "string" },
+      "responseExample": {
+        "success": true,
+        "message": "Customer registered successfully",
+        "data": { "id": "uuid", "email": "john@example.com" }
+      },
+      "errorResponses": [400, 409],
+      "pagination": null
+    },
+    {
+      "method": "POST",
+      "path": "/auth/login",
+      "authentication": "public",
+      "roles": [],
+      "requestSchema": { "email": "email", "password": "string" },
+      "validationRules": ["valid credentials"],
+      "requestExample": { "email": "john@example.com", "password": "Str0ng@Password!" },
+      "responseSchema": {
+        "accessToken": "jwt",
+        "user": "object",
+        "refreshCookie": "httpOnly cookie"
+      },
+      "responseExample": {
+        "success": true,
+        "message": "Authentication successful",
+        "data": { "accessToken": "jwt" }
+      },
+      "errorResponses": [401],
+      "pagination": null
+    },
+    {
+      "method": "POST",
+      "path": "/auth/refresh",
+      "authentication": "refresh-cookie",
+      "roles": ["CUSTOMER", "ADMIN", "SUPER_ADMIN"],
+      "requestSchema": {},
+      "validationRules": ["token exists", "token active", "token rotated"],
+      "requestExample": {},
+      "responseSchema": { "accessToken": "jwt" },
+      "responseExample": {
+        "success": true,
+        "message": "Token refreshed",
+        "data": { "accessToken": "jwt" }
+      },
+      "errorResponses": [401],
+      "pagination": null
+    },
+    {
+      "method": "POST",
+      "path": "/auth/logout",
+      "authentication": "refresh-cookie",
+      "roles": ["CUSTOMER", "ADMIN", "SUPER_ADMIN"],
+      "requestSchema": {},
+      "validationRules": ["revoke current token if present"],
+      "requestExample": {},
+      "responseSchema": {},
+      "responseExample": {
+        "success": true,
+        "message": "Logged out from current device",
+        "data": {}
+      },
+      "errorResponses": [],
+      "pagination": null
+    },
+    {
+      "method": "POST",
+      "path": "/auth/logout-all",
+      "authentication": "refresh-cookie",
+      "roles": ["CUSTOMER", "ADMIN", "SUPER_ADMIN"],
+      "requestSchema": {},
+      "validationRules": ["revoke all user tokens"],
+      "requestExample": {},
+      "responseSchema": {},
+      "responseExample": { "success": true, "message": "Logged out from all devices", "data": {} },
+      "errorResponses": [],
+      "pagination": null
+    },
+    {
+      "method": "POST",
+      "path": "/admin/login",
+      "authentication": "public",
+      "roles": [],
+      "requestSchema": { "email": "email", "password": "string" },
+      "validationRules": ["role must be ADMIN or SUPER_ADMIN"],
+      "requestExample": { "email": "admin@loan.local", "password": "Admin@123456789" },
+      "responseSchema": { "accessToken": "jwt", "user": "object" },
+      "responseExample": {
+        "success": true,
+        "message": "Admin authentication successful",
+        "data": { "accessToken": "jwt" }
+      },
+      "errorResponses": [401, 403],
+      "pagination": null
+    },
+
+    {
+      "method": "GET",
+      "path": "/me",
+      "authentication": "bearer",
+      "roles": ["CUSTOMER", "ADMIN", "SUPER_ADMIN"],
+      "requestSchema": {},
+      "validationRules": [],
+      "requestExample": {},
+      "responseSchema": { "id": "uuid", "email": "string" },
+      "responseExample": {
+        "success": true,
+        "message": "Profile fetched",
+        "data": { "id": "uuid" }
+      },
+      "errorResponses": [401, 404],
+      "pagination": null
+    },
+    {
+      "method": "PATCH",
+      "path": "/me",
+      "authentication": "bearer",
+      "roles": ["CUSTOMER", "ADMIN", "SUPER_ADMIN"],
+      "requestSchema": { "firstName": "string?", "lastName": "string?", "phoneNumber": "string?" },
+      "validationRules": ["field constraints"],
+      "requestExample": { "firstName": "Jane" },
+      "responseSchema": { "id": "uuid" },
+      "responseExample": {
+        "success": true,
+        "message": "Profile updated",
+        "data": { "id": "uuid" }
+      },
+      "errorResponses": [400, 401],
+      "pagination": null
+    },
+
+    {
+      "method": "GET",
+      "path": "/loan-products",
+      "authentication": "public",
+      "roles": [],
+      "requestSchema": {},
+      "validationRules": ["active products only"],
+      "requestExample": {},
+      "responseSchema": "LoanProduct[]",
+      "responseExample": { "success": true, "message": "Loan products fetched", "data": [] },
+      "errorResponses": [],
+      "pagination": null
+    },
+
+    {
+      "method": "POST",
+      "path": "/loan-applications",
+      "authentication": "bearer",
+      "roles": ["CUSTOMER"],
+      "requestSchema": {
+        "loanProductId": "uuid",
+        "requestedAmount": "number",
+        "requestedTenure": "number",
+        "employmentType": "string",
+        "employerName": "string?",
+        "monthlyIncome": "number",
+        "existingObligations": "number"
+      },
+      "validationRules": ["product and range checks"],
+      "requestExample": {
+        "loanProductId": "uuid",
+        "requestedAmount": 300000,
+        "requestedTenure": 36,
+        "employmentType": "SALARIED",
+        "monthlyIncome": 85000,
+        "existingObligations": 10000
+      },
+      "responseSchema": "LoanApplication",
+      "responseExample": {
+        "success": true,
+        "message": "Loan application submitted",
+        "data": { "id": "uuid", "status": "SUBMITTED" }
+      },
+      "errorResponses": [400, 401, 404],
+      "pagination": null
+    },
+    {
+      "method": "GET",
+      "path": "/loan-applications",
+      "authentication": "bearer",
+      "roles": ["CUSTOMER"],
+      "requestSchema": {},
+      "validationRules": [],
+      "requestExample": {},
+      "responseSchema": "LoanApplication[]",
+      "responseExample": { "success": true, "message": "Loan applications fetched", "data": [] },
+      "errorResponses": [401],
+      "pagination": { "type": "none", "notes": "full list" }
+    },
+    {
+      "method": "GET",
+      "path": "/loan-applications/:id",
+      "authentication": "bearer",
+      "roles": ["CUSTOMER"],
+      "requestSchema": { "id": "uuid path" },
+      "validationRules": ["must belong to user"],
+      "requestExample": {},
+      "responseSchema": "LoanApplication",
+      "responseExample": {
+        "success": true,
+        "message": "Loan application fetched",
+        "data": { "id": "uuid" }
+      },
+      "errorResponses": [401, 404],
+      "pagination": null
+    },
+    {
+      "method": "GET",
+      "path": "/loan-applications/:id/status",
+      "authentication": "bearer",
+      "roles": ["CUSTOMER"],
+      "requestSchema": { "id": "uuid path" },
+      "validationRules": ["must belong to user"],
+      "requestExample": {},
+      "responseSchema": { "status": "LoanApplicationStatus" },
+      "responseExample": {
+        "success": true,
+        "message": "Loan application status fetched",
+        "data": { "status": "UNDER_REVIEW" }
+      },
+      "errorResponses": [401, 404],
+      "pagination": null
+    },
+
+    {
+      "method": "POST",
+      "path": "/eligibility/check",
+      "authentication": "bearer",
+      "roles": ["CUSTOMER"],
+      "requestSchema": { "loanApplicationId": "uuid" },
+      "validationRules": ["application ownership", "rules engine evaluation"],
+      "requestExample": { "loanApplicationId": "uuid" },
+      "responseSchema": {
+        "eligibilityResult": "boolean",
+        "approvalProbability": "number",
+        "debtToIncomeRatio": "number",
+        "reasons": "string[]",
+        "conditions": "string[]"
+      },
+      "responseExample": {
+        "success": true,
+        "message": "Eligibility evaluated",
+        "data": { "eligibilityResult": true, "approvalProbability": 0.82 }
+      },
+      "errorResponses": [400, 401, 404],
+      "pagination": null
+    },
+    {
+      "method": "GET",
+      "path": "/credit-score",
+      "authentication": "bearer",
+      "roles": ["CUSTOMER"],
+      "requestSchema": {},
+      "validationRules": ["deterministic bureau simulation", "retry + circuit breaker"],
+      "requestExample": {},
+      "responseSchema": "CreditReport",
+      "responseExample": {
+        "success": true,
+        "message": "Credit score fetched",
+        "data": { "creditScore": 741 }
+      },
+      "errorResponses": [401, 500],
+      "pagination": null
+    },
+
+    {
+      "method": "GET",
+      "path": "/loan-history",
+      "authentication": "bearer",
+      "roles": ["CUSTOMER"],
+      "requestSchema": {},
+      "validationRules": ["terminal statuses only"],
+      "requestExample": {},
+      "responseSchema": "LoanApplication[]",
+      "responseExample": { "success": true, "message": "Loan history fetched", "data": [] },
+      "errorResponses": [401],
+      "pagination": { "type": "none" }
+    },
+    {
+      "method": "GET",
+      "path": "/notifications",
+      "authentication": "bearer",
+      "roles": ["CUSTOMER"],
+      "requestSchema": {},
+      "validationRules": [],
+      "requestExample": {},
+      "responseSchema": "Notification[]",
+      "responseExample": { "success": true, "message": "Notifications fetched", "data": [] },
+      "errorResponses": [401],
+      "pagination": { "type": "none" }
+    },
+    {
+      "method": "PATCH",
+      "path": "/notifications/:id/read",
+      "authentication": "bearer",
+      "roles": ["CUSTOMER"],
+      "requestSchema": { "id": "uuid path" },
+      "validationRules": ["notification ownership"],
+      "requestExample": {},
+      "responseSchema": "Notification",
+      "responseExample": {
+        "success": true,
+        "message": "Notification marked as read",
+        "data": { "read": true }
+      },
+      "errorResponses": [401, 404],
+      "pagination": null
+    },
+
+    {
+      "method": "GET",
+      "path": "/admin/applications",
+      "authentication": "bearer",
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "requestSchema": {},
+      "validationRules": [],
+      "requestExample": {},
+      "responseSchema": "LoanApplication[]",
+      "responseExample": { "success": true, "message": "Applications fetched", "data": [] },
+      "errorResponses": [401, 403],
+      "pagination": { "type": "none" }
+    },
+    {
+      "method": "GET",
+      "path": "/admin/applications/:id",
+      "authentication": "bearer",
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "requestSchema": { "id": "uuid path" },
+      "validationRules": ["must exist"],
+      "requestExample": {},
+      "responseSchema": "LoanApplication",
+      "responseExample": {
+        "success": true,
+        "message": "Application fetched",
+        "data": { "id": "uuid" }
+      },
+      "errorResponses": [401, 403, 404],
+      "pagination": null
+    },
+    {
+      "method": "POST",
+      "path": "/admin/applications/:id/approve",
+      "authentication": "bearer",
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "requestSchema": { "reason": "string(min:5,max:500)" },
+      "validationRules": ["eligibility must pass"],
+      "requestExample": { "reason": "Eligibility and policy checks passed" },
+      "responseSchema": "LoanDecision",
+      "responseExample": {
+        "success": true,
+        "message": "Application approved",
+        "data": { "decision": "APPROVED" }
+      },
+      "errorResponses": [400, 401, 403, 404],
+      "pagination": null
+    },
+    {
+      "method": "POST",
+      "path": "/admin/applications/:id/reject",
+      "authentication": "bearer",
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "requestSchema": { "reason": "string(min:5,max:500)" },
+      "validationRules": ["must exist"],
+      "requestExample": { "reason": "Risk policy threshold not met" },
+      "responseSchema": "LoanDecision",
+      "responseExample": {
+        "success": true,
+        "message": "Application rejected",
+        "data": { "decision": "REJECTED" }
+      },
+      "errorResponses": [401, 403, 404],
+      "pagination": null
+    },
+    {
+      "method": "POST",
+      "path": "/admin/disbursements/:id",
+      "authentication": "bearer",
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "requestSchema": { "id": "applicationId path" },
+      "validationRules": ["approved only", "single disbursement"],
+      "requestExample": {},
+      "responseSchema": "LoanDisbursement",
+      "responseExample": {
+        "success": true,
+        "message": "Disbursement completed",
+        "data": { "referenceNumber": "DISB-..." }
+      },
+      "errorResponses": [400, 401, 403, 404, 409],
+      "pagination": null
+    },
+    {
+      "method": "GET",
+      "path": "/admin/audit-logs",
+      "authentication": "bearer",
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "requestSchema": {},
+      "validationRules": ["latest 500"],
+      "requestExample": {},
+      "responseSchema": "AuditLog[]",
+      "responseExample": { "success": true, "message": "Audit logs fetched", "data": [] },
+      "errorResponses": [401, 403],
+      "pagination": { "type": "implicit-limit", "notes": "500" }
+    },
+    {
+      "method": "GET",
+      "path": "/admin/dashboard",
+      "authentication": "bearer",
+      "roles": ["ADMIN", "SUPER_ADMIN"],
+      "requestSchema": {},
+      "validationRules": ["aggregated metrics"],
+      "requestExample": {},
+      "responseSchema": {
+        "totalApplications": "number",
+        "pendingApplications": "number",
+        "approvedApplications": "number",
+        "rejectedApplications": "number",
+        "disbursedLoans": "number",
+        "averageApprovalTimeHours": "number",
+        "eligibilityTrends": "object",
+        "creditScoreDistribution": "object"
+      },
+      "responseExample": {
+        "success": true,
+        "message": "Dashboard metrics fetched",
+        "data": { "totalApplications": 120 }
+      },
+      "errorResponses": [401, 403],
+      "pagination": null
+    },
+
+    {
+      "method": "GET",
+      "path": "/health",
+      "authentication": "public",
+      "roles": [],
+      "requestSchema": {},
+      "validationRules": [],
+      "requestExample": {},
+      "responseSchema": { "status": "ok" },
+      "responseExample": {
+        "success": true,
+        "message": "Service healthy",
+        "data": { "status": "ok" }
+      },
+      "errorResponses": [],
+      "pagination": null
+    },
+    {
+      "method": "GET",
+      "path": "/ready",
+      "authentication": "public",
+      "roles": [],
+      "requestSchema": {},
+      "validationRules": ["database connectivity"],
+      "requestExample": {},
+      "responseSchema": { "status": "ready" },
+      "responseExample": {
+        "success": true,
+        "message": "Service ready",
+        "data": { "status": "ready" }
+      },
+      "errorResponses": [503],
+      "pagination": null
+    },
+    {
+      "method": "GET",
+      "path": "/metrics",
+      "authentication": "public",
+      "roles": [],
+      "requestSchema": {},
+      "validationRules": ["prometheus text"],
+      "requestExample": {},
+      "responseSchema": "text/plain",
+      "responseExample": "# HELP http_requests_total",
+      "errorResponses": [],
+      "pagination": null
+    }
+  ]
+}

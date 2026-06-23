@@ -1,0 +1,242 @@
+{
+  "info": {
+    "name": "Loan Application and Eligibility API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john@example.com\",\n  \"phoneNumber\": \"+911234567890\",\n  \"password\": \"Str0ng@Password!\",\n  \"confirmPassword\": \"Str0ng@Password!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Customer Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Str0ng@Password!\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Admin Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@loan.local\",\n  \"password\": \"Admin@123456789\"\n}"
+            }
+          }
+        },
+        { "name": "Refresh", "request": { "method": "POST", "url": "{{baseUrl}}/auth/refresh" } },
+        { "name": "Logout", "request": { "method": "POST", "url": "{{baseUrl}}/auth/logout" } },
+        {
+          "name": "Logout All",
+          "request": { "method": "POST", "url": "{{baseUrl}}/auth/logout-all" }
+        }
+      ]
+    },
+    {
+      "name": "Customer",
+      "item": [
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/me"
+          }
+        },
+        {
+          "name": "Update Me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/me",
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"John Updated\"\n}" }
+          }
+        },
+        {
+          "name": "List Products",
+          "request": { "method": "GET", "url": "{{baseUrl}}/loan-products" }
+        },
+        {
+          "name": "Create Loan Application",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/loan-applications",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loanProductId\": \"{{loanProductId}}\",\n  \"requestedAmount\": 300000,\n  \"requestedTenure\": 36,\n  \"employmentType\": \"SALARIED\",\n  \"employerName\": \"Acme Corp\",\n  \"monthlyIncome\": 85000,\n  \"existingObligations\": 10000\n}"
+            }
+          }
+        },
+        {
+          "name": "List Loan Applications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/loan-applications"
+          }
+        },
+        {
+          "name": "Loan Application Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/loan-applications/{{applicationId}}"
+          }
+        },
+        {
+          "name": "Loan Application Status",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/loan-applications/{{applicationId}}/status"
+          }
+        },
+        {
+          "name": "Eligibility Check",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/eligibility/check",
+            "body": { "mode": "raw", "raw": "{\n  \"loanApplicationId\": \"{{applicationId}}\"\n}" }
+          }
+        },
+        {
+          "name": "Credit Score",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/credit-score"
+          }
+        },
+        {
+          "name": "Loan History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/loan-history"
+          }
+        },
+        {
+          "name": "Notifications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/notifications"
+          }
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/notifications/{{notificationId}}/read"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "List Applications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": "{{baseUrl}}/admin/applications"
+          }
+        },
+        {
+          "name": "Application Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": "{{baseUrl}}/admin/applications/{{applicationId}}"
+          }
+        },
+        {
+          "name": "Approve",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/admin/applications/{{applicationId}}/approve",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Eligibility and policy checks passed\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/admin/applications/{{applicationId}}/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Risk policy threshold not met\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Disburse",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": "{{baseUrl}}/admin/disbursements/{{applicationId}}"
+          }
+        },
+        {
+          "name": "Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": "{{baseUrl}}/admin/audit-logs"
+          }
+        },
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": "{{baseUrl}}/admin/dashboard"
+          }
+        }
+      ]
+    }
+  ]
+}

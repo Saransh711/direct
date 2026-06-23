@@ -1,0 +1,266 @@
+openapi: 3.0.3
+info:
+  title: Loan Application and Eligibility API
+  version: 1.0.0
+  description: Enterprise backend for digital lending lifecycle
+servers:
+  - url: http://localhost:4000
+security:
+  - bearerAuth: []
+  - refreshCookie: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: rt
+  schemas:
+    ApiSuccess:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+        meta:
+          type: object
+    ApiError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+        traceId:
+          type: string
+paths:
+  /api/auth/register:
+    post:
+      summary: Register customer
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [firstName, lastName, email, phoneNumber, password, confirmPassword]
+              properties:
+                firstName: { type: string }
+                lastName: { type: string }
+                email: { type: string }
+                phoneNumber: { type: string }
+                password: { type: string }
+                confirmPassword: { type: string }
+      responses:
+        '201':
+          description: Registered
+  /api/auth/login:
+    post:
+      summary: Customer login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Logged in
+  /api/auth/refresh:
+    post:
+      summary: Refresh token
+      tags: [Auth]
+      responses:
+        '200':
+          description: Access token refreshed
+  /api/auth/logout:
+    post:
+      summary: Logout current device
+      tags: [Auth]
+      responses:
+        '200':
+          description: Logged out
+  /api/auth/logout-all:
+    post:
+      summary: Logout all devices
+      tags: [Auth]
+      responses:
+        '200':
+          description: Logged out all devices
+  /api/auth/admin/login:
+    post:
+      summary: Admin login
+      tags: [Auth]
+      responses:
+        '200':
+          description: Admin logged in
+  /api/admin/login:
+    post:
+      summary: Admin login (alias)
+      tags: [Auth]
+      responses:
+        '200':
+          description: Admin logged in
+  /api/me:
+    get:
+      summary: Get profile
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Profile fetched }
+    patch:
+      summary: Update profile
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Profile updated }
+  /api/loan-products:
+    get:
+      summary: List active loan products
+      tags: [LoanProducts]
+      responses:
+        '200': { description: Product list }
+  /api/loan-applications:
+    post:
+      summary: Submit loan application
+      tags: [LoanApplications]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Application submitted }
+    get:
+      summary: List customer applications
+      tags: [LoanApplications]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Application list }
+  /api/loan-applications/{id}:
+    get:
+      summary: Get application detail
+      tags: [LoanApplications]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Application detail }
+  /api/loan-applications/{id}/status:
+    get:
+      summary: Get application status
+      tags: [LoanApplications]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Status fetched }
+  /api/eligibility/check:
+    post:
+      summary: Run eligibility checks
+      tags: [Eligibility]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Eligibility computed }
+  /api/credit-score:
+    get:
+      summary: Retrieve latest credit report
+      tags: [CreditBureau]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Credit score fetched }
+  /api/loan-history:
+    get:
+      summary: Loan history for customer
+      tags: [Users]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Loan history fetched }
+  /api/notifications:
+    get:
+      summary: List customer notifications
+      tags: [Notifications]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Notifications fetched }
+  /api/notifications/{id}/read:
+    patch:
+      summary: Mark notification as read
+      tags: [Notifications]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Notification updated }
+  /api/admin/applications:
+    get:
+      summary: List all applications
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Applications fetched }
+  /api/admin/applications/{id}:
+    get:
+      summary: Get application for admin
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Application fetched }
+  /api/admin/applications/{id}/approve:
+    post:
+      summary: Approve application
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Approved }
+  /api/admin/applications/{id}/reject:
+    post:
+      summary: Reject application
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Rejected }
+  /api/admin/disbursements/{id}:
+    post:
+      summary: Disburse approved application
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Disbursed }
+  /api/admin/audit-logs:
+    get:
+      summary: Audit logs
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Logs fetched }
+  /api/admin/dashboard:
+    get:
+      summary: Dashboard metrics
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Metrics fetched }

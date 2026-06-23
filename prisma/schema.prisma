@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum LoanApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  DISBURSED
+  CANCELLED
+}
+
+enum BureauRequestStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum DecisionType {
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  SYSTEM
+  LOAN_STATUS
+  SECURITY
+  DISBURSEMENT
+}
+
+model User {
+  id              String            @id @default(uuid()) @db.Uuid
+  firstName       String            @db.VarChar(100)
+  lastName        String            @db.VarChar(100)
+  email           String            @unique @db.VarChar(255)
+  phoneNumber     String            @unique @db.VarChar(20)
+  passwordHash    String
+  role            Role              @default(CUSTOMER)
+  status          UserStatus        @default(ACTIVE)
+  deletedAt       DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  refreshTokens   RefreshToken[]
+  loanApplications LoanApplication[]
+  creditReports   CreditReport[]
+  bureauRequests  CreditBureauRequest[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+
+  @@index([role])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+model RefreshToken {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid
+  tokenIdentifier String   @unique @db.VarChar(255)
+  expiresAt       DateTime
+  revoked         Boolean  @default(false)
+  deviceInfo      String?  @db.VarChar(255)
+  ipAddress       String?  @db.VarChar(64)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revoked])
+}
+
+model LoanProduct {
+  id               String            @id @default(uuid()) @db.Uuid
+  productName      String            @db.VarChar(150)
+  minAmount        Decimal           @db.Decimal(14, 2)
+  maxAmount        Decimal           @db.Decimal(14, 2)
+  interestRate     Decimal           @db.Decimal(5, 2)
+  minTenure        Int
+  maxTenure        Int
+  eligibilityRules Json
+  active           Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  loanApplications LoanApplication[]
+
+  @@index([active])
+}
+
+model LoanApplication {
+  id                  String                 @id @default(uuid()) @db.Uuid
+  userId              String                 @db.Uuid
+  loanProductId       String                 @db.Uuid
+  requestedAmount     Decimal                @db.Decimal(14, 2)
+  requestedTenure     Int
+  employmentType      String                 @db.VarChar(100)
+  employerName        String?                @db.VarChar(200)
+  monthlyIncome       Decimal                @db.Decimal(14, 2)
+  existingObligations Decimal                @db.Decimal(14, 2)
+  status              LoanApplicationStatus  @default(SUBMITTED)
+  submittedAt         DateTime               @default(now())
+  deletedAt           DateTime?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  user                User                   @relation(fields: [userId], references: [id], onDelete: Restrict)
+  loanProduct         LoanProduct            @relation(fields: [loanProductId], references: [id], onDelete: Restrict)
+  eligibility         EligibilityAssessment?
+  decision            LoanDecision?
+  disbursement        LoanDisbursement?
+
+  @@index([userId])
+  @@index([loanProductId])
+  @@index([status])
+  @@index([submittedAt])
+  @@index([deletedAt])
+}
+
+model EligibilityAssessment {
+  id                  String          @id @default(uuid()) @db.Uuid
+  loanApplicationId   String          @unique @db.Uuid
+  eligibilityResult   Boolean
+  approvalProbability Decimal         @db.Decimal(5, 4)
+  debtToIncomeRatio   Decimal         @db.Decimal(5, 4)
+  reasons             Json
+  conditions          Json
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  loanApplication     LoanApplication @relation(fields: [loanApplicationId], references: [id], onDelete: Cascade)
+}
+
+model CreditReport {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @db.Uuid
+  creditScore     Int
+  creditSummary   Json
+  bureauReference String   @db.VarChar(100)
+  retrievedAt     DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([retrievedAt])
+}
+
+model CreditBureauRequest {
+  id             String             @id @default(uuid()) @db.Uuid
+  userId         String             @db.Uuid
+  status         BureauRequestStatus @default(PENDING)
+  failureReason  String?            @db.VarChar(255)
+  retryCount     Int                @default(0)
+  processingTime Int?               
+  createdAt      DateTime           @default(now())
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model LoanDecision {
+  id             String          @id @default(uuid()) @db.Uuid
+  applicationId  String          @unique @db.Uuid
+  decision       DecisionType
+  decisionReason String          @db.VarChar(500)
+  reviewedBy     String          @db.Uuid
+  reviewedAt     DateTime        @default(now())
+  application    LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([reviewedBy])
+  @@index([reviewedAt])
+}
+
+model LoanDisbursement {
+  id              String          @id @default(uuid()) @db.Uuid
+  applicationId   String          @unique @db.Uuid
+  amount          Decimal         @db.Decimal(14, 2)
+  disbursedBy     String          @db.Uuid
+  disbursedAt     DateTime        @default(now())
+  referenceNumber String          @unique @db.VarChar(100)
+  application     LoanApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([disbursedBy])
+  @@index([disbursedAt])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @db.Uuid
+  actionType String   @db.VarChar(100)
+  module     String   @db.VarChar(100)
+  metadata   Json
+  ipAddress  String?  @db.VarChar(64)
+  userAgent  String?  @db.VarChar(255)
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([module])
+  @@index([actionType])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @db.Uuid
+  type      NotificationType @default(SYSTEM)
+  title     String           @db.VarChar(150)
+  message   String           @db.VarChar(500)
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+model SystemConfiguration {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique @db.VarChar(150)
+  value       Json
+  description String?  @db.VarChar(500)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
